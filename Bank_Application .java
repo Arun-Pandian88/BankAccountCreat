@@ -1,127 +1,179 @@
-import java.util.*;
-
-import java.util.regex.Pattern;
-import java.lang.CharSequence;
-import java.lang.String;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Scanner;
 
 class BankAccount {
-    private String Account_No;
-    private String Password;
-    private String Name;
+    private String accountNo;
+    private String password;
+    private String name;
     private double balance;
-    char checkAgain;
-    //bankAccount method
+    private Map<LocalDateTime, Map<String, Double>> deposits;
+    private Map<LocalDateTime, Map<String, Double>> withdrawals;
 
-    //Account_Create method
-    protected void Account_Create() {
+    // Constructor
+    public BankAccount() {
+        deposits = new HashMap<>();
+        withdrawals = new HashMap<>();
+    }
 
-        System.out.println("Account_Create");
+    // Account_Create method
+    public void accountCreate() {
         Scanner scan = new Scanner(System.in);
-        System.out.println("Name");
-        Name = scan.nextLine();
-        System.out.println("Account_No");
-        Account_No = scan.nextLine();
-        System.out.println("Password");
-        Password = scan.nextLine();
+        System.out.println("Account Creation");
+
+        // Get user input for name
+        System.out.println("Name: ");
+        name = scan.nextLine();
+
+        // Get user input for account number
+        System.out.println("Account Number: ");
+        accountNo = scan.nextLine();
+
+        // Get user input for password with a minimum length of 8 characters
+        do {
+            System.out.println("Password (minimum 8 characters): ");
+            password = scan.nextLine();
+
+            if (password.length() < 8) {
+                System.out.println("Invalid Password! Minimum 8 characters required.");
+            } else {
+                System.out.println("Password is correct");
+            }
+
+        } while (password.length() < 8);
+
+        System.out.println("Account created successfully!");
     }
 
-    //deposit method
-    void deposit(double Amount) {
-
-        balance = balance + Amount;
+    // deposit method
+    private void deposit(double amount) {
+        balance += amount;
+        LocalDateTime currentDateTime = LocalDateTime.now();
+        deposits.computeIfAbsent(currentDateTime, k -> new HashMap<>()).put("Transaction " + deposits.size() + 1, amount);
+        System.out.println("Amount deposited successfully!");
     }
 
-    //withdraw method
-    void withdraw(double Amount) {
-        if (balance >= 100) {
-            balance = balance - Amount;
-            System.out.println("After withdraw the amount balance : " + " " + balance);
+    // withdraw method
+    private void withdraw(double amount) {
+        if (balance >= amount) {
+            balance -= amount;
+            LocalDateTime currentDateTime = LocalDateTime.now();
+            withdrawals.computeIfAbsent(currentDateTime, k -> new HashMap<>()).put("Transaction " + withdrawals.size() + 1, amount);
+            System.out.println("Amount withdrawn successfully!");
         } else {
-            System.out.println("withdraw is not insuffition");
+            System.out.println("Insufficient funds for withdrawal.");
         }
     }
 
-    //getbalance method
-    public void getBalance() {
-        System.out.println(balance);
+    // Other methods...
 
+    private void printTransactions(Map<LocalDateTime, Map<String, Double>> transactions) {
+        for (Map.Entry<LocalDateTime, Map<String, Double>> entry : transactions.entrySet()) {
+            System.out.println("Date and Time: " + entry.getKey());
+            for (Map.Entry<String, Double> transaction : entry.getValue().entrySet()) {
+                System.out.println(transaction.getKey() + ": " + transaction.getValue());
+            }
+        }
     }
 
-    //display_Menu methode
-    void display_Menu() {
+
+    // getBalance method
+    private double getBalance() {
+        return balance;
+    }
+
+    // displayMenu method
+    private void displayMenu() {
         Scanner in = new Scanner(System.in);
+        char checkAgain;
+
         do {
-            System.out.println("choose your choice");
-            System.out.println("A : deposite ");
-            System.out.println("B : withdraw ");
-            System.out.println("C : balance ");
-            System.out.println("E : Exit");
-            char Char = in.next().charAt(0);
-            //using switch case
-            switch (Char) {
-                //press A in deposit session
+            System.out.println("Choose your option:");
+            System.out.println("A: Deposit");
+            System.out.println("B: Withdraw");
+            System.out.println("C: Check Balance");
+            System.out.println("D: Account Details");
+            System.out.println("E: Logout");
+
+            char choice = in.next().charAt(0);
+
+            switch (choice) {
                 case 'A':
-                    System.out.println("deposit");
-                    System.out.println("Enter the deposit amount :");
-                    double Amount = in.nextDouble();
-                    deposit(Amount);
+                    System.out.println("Deposit");
+                    System.out.println("Enter the deposit amount:");
+                    double depositAmount = in.nextDouble();
+                    deposit(depositAmount);
                     break;
-                //press B in withdraw session
                 case 'B':
-
-                    System.out.println("withdraw");
-                    System.out.println("Enter the withdraw amount :");
-                    double Amount2 = in.nextDouble();
-                    withdraw(Amount2);
+                    System.out.println("Withdraw");
+                    System.out.println("Enter the withdrawal amount:");
+                    double withdrawAmount = in.nextDouble();
+                    withdraw(withdrawAmount);
                     break;
-                //press C in balance session
                 case 'C':
-                    System.out.println("balance");
-                    getBalance();
+                    System.out.println("Balance: " + getBalance());
                     break;
-
-
+                case 'D':
+                    displayAccountDetails();
+                    break;
+                case 'E':
+                    System.out.println("Logging out. Thank you!");
+                    return;  // Exit the loop and the method
+                default:
+                    System.out.println("Invalid option!");
             }
-            //checkAgain in Y/N
-            System.out.println("Do you need to checkAgain? (Y/N): ");
+
+            System.out.println("Do you want to perform another transaction? (Y/N): ");
             checkAgain = in.next().charAt(0);
         } while (checkAgain == 'Y' || checkAgain == 'y');
+
         System.out.println("Thank you!");
     }
 
-    void Login() {
-        System.out.println("lOGIN");
+    public void displayAccountDetails() {
+        System.out.println("Account Details");
+        System.out.println("======================================");
+        System.out.println("Name: " + name);
+        System.out.println("Account No: " + accountNo);
+        System.out.println("Balance: " + balance);
+        System.out.println("Deposit Transactions:");
+        printTransactions(deposits);
+        System.out.println("Withdrawal Transactions:");
+        printTransactions(withdrawals);
+    }
+
+
+
+    // login method
+    public void login() {
+        System.out.println("LOGIN");
         System.out.println("---------------------------------");
-        Scanner scane = new Scanner(System.in);
-        System.out.println("AccountNumber");
-        String Account_No2 = scane.nextLine();
-        System.out.println("Password");
-        String Password2 = scane.nextLine();
-        //if (Datas.containsKey("Account_No") || Datas.containsKey("Password")) {
-        if (Account_No.equals(Account_No2)) {
-            if (Password.equals(Password2)) {
-                System.out.println("Login sucessfully!");
-                display_Menu();
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Account Number: ");
+        String accountNoInput = scanner.nextLine();
+        System.out.println("Password: ");
+        String passwordInput = scanner.nextLine();
 
-            } else {
-                System.out.println("Invalid Password! please check this correct");
-            }
-
+        if (accountNo.equals(accountNoInput) && password.equals(passwordInput)) {
+            System.out.println("Login successful!");
+            displayMenu();
         } else {
-            System.out.println("Invalid Account Number! please check this correct");
+            System.out.println("Invalid Account Number or Password. Please check and try again.");
         }
-
-
     }
+
+
 }
 
-class Bank_Application extends BankAccount {
+public class BankApplication {
     public static void main(String[] args) {
-        //class object create in this main class
-        BankAccount StateBank = new BankAccount();
-        //another class methode call in main methode
-        StateBank.Account_Create();
+        BankAccount stateBank = new BankAccount();
+        stateBank.accountCreate();
         System.out.println();
-        StateBank.Login();
+        stateBank.login();
+
     }
 }
+
